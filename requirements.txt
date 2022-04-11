@@ -1,0 +1,4 @@
+python-suanpan-slim
+pywin32
+keyboard
+pyautogui

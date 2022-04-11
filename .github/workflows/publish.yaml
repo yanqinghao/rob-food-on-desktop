@@ -1,0 +1,64 @@
+# This workflow will upload a Python Package using Twine when a release is created
+# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
+
+name: package
+
+on:
+  push:
+    tags:
+      - "v*"
+      - '!v*.dev'
+
+jobs:
+
+  build:
+
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.8']
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # 构建和发布换成前面的脚本
+    - name: Build and publish
+      run: |
+        ./tools/build.ps1
+
+    - name: Get Name of packages
+      id: get_package_name
+      run: |
+        ZIP_PATH=$(ls *.zip | tail -n 1)
+        ZIP_NAME=$(basename ${ZIP_PATH})
+        echo "::set-output name=zip_path::${ZIP_PATH}"
+        echo "::set-output name=zip_name::${ZIP_NAME}"
+        echo "::set-output name=tag::${GITHUB_REF#refs/*/}"
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_package_name.outputs.tag }}
+        release_name: ${{ steps.get_package_name.outputs.tag }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./${{ steps.get_package_name.outputs.zip_path }}
+        asset_name: ${{ steps.get_package_name.outputs.zip_name }}
+        asset_content_type: application/zip
+  
