@@ -34,10 +34,9 @@ jobs:
     - name: Get Name of packages
       id: get_package_name
       run: |
-        ZIP_PATH=$(ls *.zip | tail -n 1)
-        ZIP_NAME=$(basename ${ZIP_PATH})
+        Get-ChildItem -Path $ZIP_PATH -Recurse -Filter "*.zip"
         echo "::set-output name=zip_path::${ZIP_PATH}"
-        echo "::set-output name=zip_name::${ZIP_NAME}"
+        echo "::set-output name=zip_name::${ZIP_PATH}"
         echo "::set-output name=tag::${GITHUB_REF#refs/*/}"
 
     - name: Create Release
